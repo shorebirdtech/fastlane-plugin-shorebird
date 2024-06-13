@@ -5,7 +5,7 @@ module Fastlane
   module Actions
     class ShorebirdReleaseAction < Action
       def self.run(params)
-        sh("shorebird release #{params[:platform]} #{params[:args]}")
+        Fastlane::Actions.sh("shorebird release #{params[:platform]} #{params[:args]}".strip)
       end
 
       def self.description
@@ -13,7 +13,7 @@ module Fastlane
       end
 
       def self.authors
-        ["Bryan Oltman"]
+        Helper::ShorebirdHelper.authors
       end
 
       def self.details
@@ -39,7 +39,7 @@ module Fastlane
       end
 
       def self.is_supported?(platform)
-        [:ios, :android].include?(platform)
+        Helper::ShorebirdHelper.supported_platforms.include?(platform)
       end
     end
   end

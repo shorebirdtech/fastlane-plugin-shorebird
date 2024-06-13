@@ -11,6 +11,14 @@ module Fastlane
       def self.show_message
         UI.message("Hello from the shorebird plugin helper!")
       end
+
+      def self.authors
+        ["bryanoltman"]
+      end
+
+      def self.supported_platforms
+        [:ios, :android]
+      end
     end
   end
 end
