@@ -3,13 +3,13 @@ require_relative '../helper/shorebird_helper'
 
 module Fastlane
   module Actions
-    class ShorebirdAction < Action
+    class ShorebirdReleaseAction < Action
       def self.run(params)
         UI.message("The shorebird plugin is working!")
       end
 
       def self.description
-        "Create Shorebird releases and patches"
+        "Create a Shorebird release"
       end
 
       def self.authors
@@ -21,8 +21,8 @@ module Fastlane
       end
 
       def self.details
-        # Optional:
-        "Create Shorebird releases and patches"
+        # TODO
+        "Create a Shorebird release"
       end
 
       def self.available_options
