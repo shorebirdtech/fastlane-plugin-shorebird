@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email         = 'bryan@shorebird.dev'
 
   spec.summary       = 'Create Shorebird releases and patches'
-  # spec.homepage      = "https://github.com/<GITHUB_USERNAME>/fastlane-plugin-shorebird"
+  spec.homepage      = "https://github.com/shorebirdtech/fastlane-plugin-shorebird"
   spec.license       = "MIT"
 
   spec.files         = Dir["lib/**/*"] + %w(README.md LICENSE)
