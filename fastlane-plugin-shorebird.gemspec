@@ -5,8 +5,8 @@ require 'fastlane/plugin/shorebird/version'
 Gem::Specification.new do |spec|
   spec.name          = 'fastlane-plugin-shorebird'
   spec.version       = Fastlane::Shorebird::VERSION
-  spec.author        = 'Bryan Oltman'
-  spec.email         = 'bryan@shorebird.dev'
+  spec.author        = 'Shorebird'
+  spec.email         = 'contact@shorebird.dev'
 
   spec.summary       = 'Create Shorebird releases and patches'
   spec.homepage      = "https://github.com/shorebirdtech/fastlane-plugin-shorebird"
