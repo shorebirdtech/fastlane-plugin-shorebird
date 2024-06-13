@@ -17,8 +17,7 @@ module Fastlane
       end
 
       def self.details
-        # TODO
-        "Create a Shorebird patch"
+        "Create a Shorebird patch for the provided platform with the given arguments."
       end
 
       def self.available_options

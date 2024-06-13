@@ -17,7 +17,7 @@ module Fastlane
       end
 
       def self.details
-        "Create a Shorebird release for the given platform."
+        "Create a Shorebird release for the provided platform with the given arguments."
       end
 
       def self.available_options
