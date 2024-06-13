@@ -1,4 +1,4 @@
-# shorebird plugin
+# Shorebird `fastlane` plugin
 
 [![fastlane Plugin Badge](https://rawcdn.githack.com/fastlane/fastlane/master/fastlane/assets/plugin-badge.svg)](https://rubygems.org/gems/fastlane-plugin-shorebird)
 
@@ -12,15 +12,26 @@ fastlane add_plugin shorebird
 
 ## About shorebird
 
-Create Shorebird releases and patches
-
-**Note to author:** Add a more detailed description about this plugin here. If your plugin contains multiple actions, make sure to mention them here.
+This plugin makes it easy to create Shorebird releases and patches.
 
 ## Example
 
-Check out the [example `Fastfile`](fastlane/Fastfile) to see how to use this plugin. Try it by cloning the repo, running `fastlane install_plugins` and `bundle exec fastlane test`.
+This plugin is designed to work with Flutter apps that use Shorebird. 
 
-**Note to author:** Please set up a sample project to make it easy for users to explore what your plugin does. Provide everything that is necessary to try out the plugin in this project (including a sample Xcode/Android project if necessary)
+In your Flutter app's `ios` and/or `android` directories, initialize Fastlane
+and add this plugin using `bundle exec fastlane add_plugin shorebird`.
+
+Then, update your `Fastfile` to include the following:
+
+```ruby
+lane :release_ios do
+  shorebird_release(platform: "ios")
+end
+```
+
+This will create a new release on Shorebird for the iOS platform.
+
+See https://docs.shorebird.dev/guides/fastlane for more information.
 
 ## Run tests for this plugin
 
