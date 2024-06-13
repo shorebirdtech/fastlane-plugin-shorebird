@@ -3,7 +3,7 @@ source('https://rubygems.org')
 # Provides a consistent environment for Ruby projects by tracking and installing exact gem versions.
 gem 'bundler'
 # Automation tool for mobile developers.
-gem 'fastlane', '>= 2.221.0'
+gem 'fastlane', '>= 2.220.0'
 # Provides an interactive debugging environment for Ruby.
 gem 'pry'
 # A simple task automation tool.

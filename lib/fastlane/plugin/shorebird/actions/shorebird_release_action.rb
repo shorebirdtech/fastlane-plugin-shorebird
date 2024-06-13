@@ -5,7 +5,7 @@ module Fastlane
   module Actions
     class ShorebirdReleaseAction < Action
       def self.run(params)
-        UI.message("The shorebird plugin is working!")
+        sh("shorebird release #{params[:platform]} #{params[:args]}")
       end
 
       def self.description
@@ -16,31 +16,30 @@ module Fastlane
         ["Bryan Oltman"]
       end
 
-      def self.return_value
-        # If your method provides a return value, you can describe here what it does
-      end
-
       def self.details
-        # TODO
-        "Create a Shorebird release"
+        "Create a Shorebird release for the given platform."
       end
 
       def self.available_options
         [
-          # FastlaneCore::ConfigItem.new(key: :your_option,
-          #                         env_name: "SHOREBIRD_YOUR_OPTION",
-          #                      description: "A description of your option",
-          #                         optional: false,
-          #                             type: String)
+          FastlaneCore::ConfigItem.new(
+            key: :platform,
+            description: "Which platform to release to (ios,android)",
+            optional: false,
+            type: String
+          ),
+          FastlaneCore::ConfigItem.new(
+            key: :args,
+            description: "The argument string to pass to shorebird release",
+            optional: true,
+            type: String,
+            default_value: ""
+          )
         ]
       end
 
       def self.is_supported?(platform)
-        # Adjust this if your plugin only works for a particular platform (iOS vs. Android, for example)
-        # See: https://docs.fastlane.tools/advanced/#control-configuration-by-lane-and-by-platform
-        #
-        # [:ios, :mac, :android].include?(platform)
-        true
+        [:ios, :android].include?(platform)
       end
     end
   end
