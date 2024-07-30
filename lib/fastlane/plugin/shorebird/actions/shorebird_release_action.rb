@@ -5,7 +5,18 @@ module Fastlane
   module Actions
     class ShorebirdReleaseAction < Action
       def self.run(params)
-        Fastlane::Actions.sh("shorebird release #{params[:platform]} #{params[:args]}".strip)
+        platform = params[:platform]
+        Fastlane::Actions.sh("shorebird release #{platform} #{params[:args]}".strip)
+
+        if platform == "ios"
+          # Get the most recently-created IPA file
+          ipa_file = Dir.glob('../build/ios/ipa/*.ipa')
+                        .sort_by! { |f| File.stat(f).ctime }
+                        .reverse!
+                        .first
+          puts("Setting IPA_OUTPUT_PATH to #{ipa_file}")
+          lane_context[SharedValues::IPA_OUTPUT_PATH] = ipa_file
+        end
       end
 
       def self.description
