@@ -18,6 +18,7 @@ module Fastlane
     class ShorebirdReleaseAction < Action
       def self.run(params)
         platform = params[:platform]
+        params[:args] ||= ""
 
         if platform == "ios"
           export_options_hash = {}
@@ -47,11 +48,13 @@ module Fastlane
           export_options_hash.compact!
 
           plist_path = ExportOptionsPlistGenerator.generate(export_options_hash)
-          puts("Generated export options plist at #{plist_path}")
-          params[:args] = params[:args] + " --export-options-plist #{plist_path}"
+
+          optional_space = (params[:args].end_with?(" ") || params[:args].empty?) ? "" : " "
+          params[:args] = params[:args] + "#{optional_space}--export-options-plist #{plist_path}"
         end
 
-        Fastlane::Actions.sh("shorebird release #{platform} #{params[:args]}".strip)
+        command = "shorebird release #{platform} #{params[:args]}".strip
+        Fastlane::Actions.sh(command)
 
         if platform == "ios"
           # Get the most recently-created IPA file
