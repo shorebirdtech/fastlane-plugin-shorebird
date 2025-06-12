@@ -1,11 +1,56 @@
 require 'fastlane/action'
 require_relative '../helper/shorebird_helper'
+require 'gym'
+require 'plist'
+require 'tempfile'
 
 module Fastlane
   module Actions
+    class ExportOptionsPlistGenerator
+      def self.generate(export_options)
+        tmp_path = Dir.mktmpdir('shorebird')
+        plist_path = File.join(tmp_path, "ExportOptions.plist")
+        File.write(plist_path, export_options.to_plist)
+        plist_path
+      end
+    end
+
     class ShorebirdReleaseAction < Action
       def self.run(params)
         platform = params[:platform]
+
+        if platform == "ios"
+          export_options_hash = {}
+          if params[:export_options].kind_of?(Hash)
+            export_options_hash = params[:export_options]
+            export_options_hash[:method] = "app-store"
+            provisioning_profile_mapping = Fastlane::Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
+            if provisioning_profile_mapping
+              # If match has provided provisioning profiles, put them in the export options plist
+              export_options_hash[:provisioningProfiles] = provisioning_profile_mapping
+              export_options_hash[:signingStyle] = 'manual'
+            end
+          elsif params[:export_options].kind_of?(String)
+            export_options_path = File.expand_path(params[:export_options])
+            unless File.exist?(export_options_path)
+              raise "export_options path #{export_options_path} does not exist"
+            end
+
+            export_options_hash = Plist.parse_xml(export_options_path)
+          end
+
+          # If manageAppVersionAndBuildNumber is not false, Shorebird won't
+          # work. If set to true (or not provided), Xcode will change the build
+          # number *after* the release is created, causing the app to be
+          # unpatchable.
+          export_options_hash[:manageAppVersionAndBuildNumber] = false
+          export_options_hash.compact!
+
+          plist_path = ExportOptionsPlistGenerator.generate(export_options_hash)
+          puts("Generated export options plist at #{plist_path}")
+          params[:args] = params[:args] + " --export-options-plist #{plist_path}"
+        end
+
         Fastlane::Actions.sh("shorebird release #{platform} #{params[:args]}".strip)
 
         if platform == "ios"
@@ -45,6 +90,14 @@ module Fastlane
             optional: true,
             type: String,
             default_value: ""
+          ),
+          FastlaneCore::ConfigItem.new(
+            key: :export_options,
+            description: "Path to an export options plist or a hash with export options. Use 'xcodebuild -help' to print the full set of available options",
+            optional: true,
+            type: Hash,
+            skip_type_validation: true,
+            default_value: {}
           )
         ]
       end
