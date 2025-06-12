@@ -58,13 +58,17 @@ module Fastlane
 
         if platform == "ios"
           # Get the most recently-created IPA file
-          ipa_file = Dir.glob('../build/ios/ipa/*.ipa')
-                        .sort_by! { |f| File.stat(f).ctime }
-                        .reverse!
-                        .first
+          ipa_file = most_recent_ipa_file
           puts("Setting IPA_OUTPUT_PATH to #{ipa_file}")
           lane_context[SharedValues::IPA_OUTPUT_PATH] = ipa_file
         end
+      end
+
+      def self.most_recent_ipa_file
+        Dir.glob('../build/ios/ipa/*.ipa')
+           .sort_by! { |f| File.stat(f).ctime }
+           .reverse!
+           .first
       end
 
       def self.description
