@@ -1,32 +1,32 @@
 require 'spec_helper'
+require_relative '../lib/fastlane/plugin/shorebird/helper/export_options_plist'
 
 describe Fastlane::Actions::ShorebirdReleaseAction do
-  action = Fastlane::Actions::ShorebirdReleaseAction
-  plist_generator = Fastlane::Actions::ExportOptionsPlistGenerator
+  subject { Fastlane::Actions::ShorebirdReleaseAction }
   path_to_export_options_plist = '/path/to/export_options.plist'
 
   before do
     allow(Fastlane::Actions).to receive(:sh).with(anything)
-    allow(plist_generator).to receive(:generate).with(any_args).and_return(path_to_export_options_plist)
+    allow(Fastlane::Helper::ExportOptionsPlist).to receive(:generate_export_options_plist).with(any_args).and_return(path_to_export_options_plist)
   end
 
   describe '#run' do
     describe 'targeting android' do
       it 'invokes shorebird release with the specified platform' do
         expect(Fastlane::Actions).to receive(:sh).with("shorebird release android")
-        action.run(platform: "android")
+        subject.run(platform: "android")
       end
 
       it 'invokes shorebird release with the specified platform and args' do
         expect(Fastlane::Actions).to receive(:sh).with("shorebird release android -- --build-name=1.0.0")
-        action.run(platform: "android", args: "-- --build-name=1.0.0")
+        subject.run(platform: "android", args: "-- --build-name=1.0.0")
       end
     end
 
     describe 'targeting ios' do
       it 'invokes shorebird release with the specified platform' do
         expect(Fastlane::Actions).to receive(:sh).with(match_regex(/shorebird release ios --export-options-plist .*/))
-        action.run(platform: "ios")
+        subject.run(platform: "ios")
       end
 
       it 'adds IPA_OUTPUT_PATH to lane context if platform is ios' do
@@ -39,29 +39,9 @@ describe Fastlane::Actions::ShorebirdReleaseAction do
         allow(File).to receive(:stat).with(old_ipa_file.path).and_return(instance_double('File::Stat', ctime: Time.now - 100))
         allow(File).to receive(:stat).with(new_ipa_file.path).and_return(instance_double('File::Stat', ctime: Time.now - 10))
 
-        action.run(platform: "ios")
+        subject.run(platform: "ios")
 
         expect(Fastlane::Actions.lane_context[Fastlane::Actions::SharedValues::IPA_OUTPUT_PATH]).to eq(new_ipa_file.path)
-      end
-
-      describe 'export_options as a hash' do
-        it 'raises an error if the file does not exist' do
-          expect do
-            action.run(platform: "ios", export_options: "/path/to/not/a/file")
-          end.to raise_error("export_options path /path/to/not/a/file does not exist")
-        end
-
-        # TODO
-      end
-
-      describe 'export_options as a file' do
-        it 'raises an error if the file does not exist' do
-          expect do
-            action.run(platform: "ios", export_options: "/path/to/not/a/file")
-          end.to raise_error("export_options path /path/to/not/a/file does not exist")
-        end
-
-        # TODO
       end
     end
   end

@@ -6,22 +6,14 @@ require 'tempfile'
 
 module Fastlane
   module Actions
-    class ExportOptionsPlistGenerator
-      def self.generate(export_options)
-        tmp_path = Dir.mktmpdir('shorebird')
-        plist_path = File.join(tmp_path, "ExportOptions.plist")
-        File.write(plist_path, export_options.to_plist)
-        plist_path
-      end
-    end
-
     class ShorebirdReleaseAction < Action
       def self.run(params)
         platform = params[:platform]
         params[:args] ||= ""
 
         if platform == "ios"
-          export_options_plist_path = generate_export_options_plist(params[:export_options])
+          provisioning_profile_mapping = Fastlane::Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
+          export_options_plist_path = Helper::ExportOptionsPlist.generate_export_options_plist(params[:export_options], provisioning_profile_mapping)
           optional_space = (params[:args].end_with?(" ") || params[:args].empty?) ? "" : " "
           params[:args] = params[:args] + "#{optional_space}--export-options-plist #{export_options_plist_path}"
         end
@@ -41,35 +33,35 @@ module Fastlane
            .first
       end
 
-      def self.generate_export_options_plist(export_options)
-        export_options_hash = {}
-        if export_options.kind_of?(Hash)
-          export_options_hash = export_options
-          export_options_hash[:method] = "app-store"
-          provisioning_profile_mapping = Fastlane::Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
-          if provisioning_profile_mapping
-            # If match has provided provisioning profiles, put them in the export options plist
-            export_options_hash[:provisioningProfiles] = provisioning_profile_mapping
-            export_options_hash[:signingStyle] = 'manual'
-          end
-        elsif export_options.kind_of?(String)
-          export_options_path = File.expand_path(export_options)
-          unless File.exist?(export_options_path)
-            raise "export_options path #{export_options_path} does not exist"
-          end
+      # def self.generate_export_options_plist(export_options)
+      #   export_options_hash = {}
+      #   if export_options.kind_of?(Hash)
+      #     export_options_hash = export_options
+      #     export_options_hash[:method] = "app-store"
+      #     provisioning_profile_mapping = Fastlane::Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
+      #     if provisioning_profile_mapping
+      #       # If match has provided provisioning profiles, put them in the export options plist
+      #       export_options_hash[:provisioningProfiles] = provisioning_profile_mapping
+      #       export_options_hash[:signingStyle] = 'manual'
+      #     end
+      #   elsif export_options.kind_of?(String)
+      #     export_options_path = File.expand_path(export_options)
+      #     unless File.exist?(export_options_path)
+      #       raise "export_options path #{export_options_path} does not exist"
+      #     end
 
-          export_options_hash = Plist.parse_xml(export_options_path)
-        end
+      #     export_options_hash = Plist.parse_xml(export_options_path)
+      #   end
 
-        # If manageAppVersionAndBuildNumber is not false, Shorebird won't
-        # work. If set to true (or not provided), Xcode will change the build
-        # number *after* the release is created, causing the app to be
-        # unpatchable.
-        export_options_hash[:manageAppVersionAndBuildNumber] = false
-        export_options_hash.compact!
+      #   # If manageAppVersionAndBuildNumber is not false, Shorebird won't
+      #   # work. If set to true (or not provided), Xcode will change the build
+      #   # number *after* the release is created, causing the app to be
+      #   # unpatchable.
+      #   export_options_hash[:manageAppVersionAndBuildNumber] = false
+      #   export_options_hash.compact!
 
-        ExportOptionsPlistGenerator.generate(export_options_hash)
-      end
+      #   ExportOptionsPlistGenerator.generate(export_options_hash)
+      # end
 
       def self.description
         "Create a Shorebird release"
