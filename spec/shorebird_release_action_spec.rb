@@ -28,7 +28,7 @@ describe Fastlane::Actions::ShorebirdReleaseAction do
 
       it 'adds IPA_OUTPUT_PATH to lane context if platform is ios' do
         old_ipa_file = instance_double('File', path: 'old.ipa')
-        new_ipa_file = instance_double('File', path: 'new_ipa')
+        new_ipa_file = instance_double('File', path: 'new.ipa')
 
         allow(Fastlane::Actions).to receive(:sh).with(match_regex(/shorebird release ios --export-options-plist .*/))
 
