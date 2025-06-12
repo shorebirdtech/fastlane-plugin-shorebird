@@ -1,6 +1,14 @@
 module Fastlane
   module Helper
     class ExportOptionsPlist
+      # Generates an export options plist for use with Shorebird.
+      # In addition to handling data produced by match, it also updates the
+      # export options to ensure that the build number is not managed by Xcode
+      # and that the release method is set to app-store.
+      #
+      # @param export_options [Hash, String] The export options to use. If a hash, it will be used directly. If a string, it will be parsed as a plist file.
+      # @param provisioning_profile_mapping [Hash] The provisioning profile mapping from match. If provided, the provisioning profiles will be added to the export options plist.
+      # @return [String] The path to the generated export options plist.
       def self.generate_export_options_plist(export_options, provisioning_profile_mapping = nil)
         export_options_hash = {}
         if export_options.kind_of?(Hash)
