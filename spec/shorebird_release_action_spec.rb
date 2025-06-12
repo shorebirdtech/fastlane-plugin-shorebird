@@ -2,9 +2,12 @@ require 'spec_helper'
 
 describe Fastlane::Actions::ShorebirdReleaseAction do
   action = Fastlane::Actions::ShorebirdReleaseAction
+  plist_generator = Fastlane::Actions::ExportOptionsPlistGenerator
+  path_to_export_options_plist = '/path/to/export_options.plist'
 
   before do
     allow(Fastlane::Actions).to receive(:sh).with(anything)
+    allow(plist_generator).to receive(:generate).with(any_args).and_return(path_to_export_options_plist)
   end
 
   describe '#run' do

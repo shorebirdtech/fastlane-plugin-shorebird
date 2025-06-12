@@ -21,46 +21,16 @@ module Fastlane
         params[:args] ||= ""
 
         if platform == "ios"
-          export_options_hash = {}
-          if params[:export_options].kind_of?(Hash)
-            export_options_hash = params[:export_options]
-            export_options_hash[:method] = "app-store"
-            provisioning_profile_mapping = Fastlane::Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
-            if provisioning_profile_mapping
-              # If match has provided provisioning profiles, put them in the export options plist
-              export_options_hash[:provisioningProfiles] = provisioning_profile_mapping
-              export_options_hash[:signingStyle] = 'manual'
-            end
-          elsif params[:export_options].kind_of?(String)
-            export_options_path = File.expand_path(params[:export_options])
-            unless File.exist?(export_options_path)
-              raise "export_options path #{export_options_path} does not exist"
-            end
-
-            export_options_hash = Plist.parse_xml(export_options_path)
-          end
-
-          # If manageAppVersionAndBuildNumber is not false, Shorebird won't
-          # work. If set to true (or not provided), Xcode will change the build
-          # number *after* the release is created, causing the app to be
-          # unpatchable.
-          export_options_hash[:manageAppVersionAndBuildNumber] = false
-          export_options_hash.compact!
-
-          plist_path = ExportOptionsPlistGenerator.generate(export_options_hash)
-
+          export_options_plist_path = generate_export_options_plist(params[:export_options])
           optional_space = (params[:args].end_with?(" ") || params[:args].empty?) ? "" : " "
-          params[:args] = params[:args] + "#{optional_space}--export-options-plist #{plist_path}"
+          params[:args] = params[:args] + "#{optional_space}--export-options-plist #{export_options_plist_path}"
         end
 
         command = "shorebird release #{platform} #{params[:args]}".strip
         Fastlane::Actions.sh(command)
 
         if platform == "ios"
-          # Get the most recently-created IPA file
-          ipa_file = most_recent_ipa_file
-          puts("Setting IPA_OUTPUT_PATH to #{ipa_file}")
-          lane_context[SharedValues::IPA_OUTPUT_PATH] = ipa_file
+          lane_context[SharedValues::IPA_OUTPUT_PATH] = most_recent_ipa_file
         end
       end
 
@@ -69,6 +39,36 @@ module Fastlane
            .sort_by! { |f| File.stat(f).ctime }
            .reverse!
            .first
+      end
+
+      def self.generate_export_options_plist(export_options)
+        export_options_hash = {}
+        if export_options.kind_of?(Hash)
+          export_options_hash = export_options
+          export_options_hash[:method] = "app-store"
+          provisioning_profile_mapping = Fastlane::Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
+          if provisioning_profile_mapping
+            # If match has provided provisioning profiles, put them in the export options plist
+            export_options_hash[:provisioningProfiles] = provisioning_profile_mapping
+            export_options_hash[:signingStyle] = 'manual'
+          end
+        elsif export_options.kind_of?(String)
+          export_options_path = File.expand_path(export_options)
+          unless File.exist?(export_options_path)
+            raise "export_options path #{export_options_path} does not exist"
+          end
+
+          export_options_hash = Plist.parse_xml(export_options_path)
+        end
+
+        # If manageAppVersionAndBuildNumber is not false, Shorebird won't
+        # work. If set to true (or not provided), Xcode will change the build
+        # number *after* the release is created, causing the app to be
+        # unpatchable.
+        export_options_hash[:manageAppVersionAndBuildNumber] = false
+        export_options_hash.compact!
+
+        ExportOptionsPlistGenerator.generate(export_options_hash)
       end
 
       def self.description
