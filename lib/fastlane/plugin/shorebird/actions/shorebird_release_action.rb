@@ -12,10 +12,15 @@ module Fastlane
         params[:args] ||= ""
 
         if platform == "ios"
-          provisioning_profile_mapping = Fastlane::Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
-          export_options_plist_path = Helper::ExportOptionsPlist.generate_export_options_plist(params[:export_options], provisioning_profile_mapping)
-          optional_space = (params[:args].end_with?(" ") || params[:args].empty?) ? "" : " "
-          params[:args] = params[:args] + "#{optional_space}--export-options-plist #{export_options_plist_path}"
+          if export_options_plist_in_args?(params)
+            # If the user is already providing an export options plist, warn
+            UI.deprecated("--export-options-plist should not be passed in the args parameter. Please use the export_options parameter instead.")
+          else
+            provisioning_profile_mapping = Fastlane::Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
+            export_options_plist_path = Helper::ExportOptionsPlist.generate_export_options_plist(params[:export_options], provisioning_profile_mapping)
+            optional_space = (params[:args].end_with?(" ") || params[:args].empty?) ? "" : " "
+            params[:args] = params[:args] + "#{optional_space}--export-options-plist #{export_options_plist_path}"
+          end
         end
 
         command = "shorebird release #{platform} #{params[:args]}".strip
@@ -31,6 +36,10 @@ module Fastlane
            .sort_by! { |f| File.stat(f).ctime }
            .reverse!
            .first
+      end
+
+      def self.export_options_plist_in_args?(params)
+        params[:args].include?("--export-options-plist")
       end
 
       def self.description

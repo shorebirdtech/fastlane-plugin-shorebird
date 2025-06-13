@@ -24,6 +24,11 @@ describe Fastlane::Actions::ShorebirdReleaseAction do
     end
 
     describe 'targeting ios' do
+      it 'warns if --export-options-plist is in the args parameter' do
+        expect(Fastlane::UI).to receive(:deprecated).with("--export-options-plist should not be passed in the args parameter. Please use the export_options parameter instead.")
+        subject.run(platform: "ios", args: "--export-options-plist /my/export_options.plist")
+      end
+
       it 'invokes shorebird release with the specified platform' do
         expect(Fastlane::Actions).to receive(:sh).with(match_regex(/shorebird release ios --export-options-plist .*/))
         subject.run(platform: "ios")
