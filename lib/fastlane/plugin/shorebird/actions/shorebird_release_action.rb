@@ -1,22 +1,45 @@
 require 'fastlane/action'
 require_relative '../helper/shorebird_helper'
+require 'gym'
+require 'plist'
+require 'tempfile'
 
 module Fastlane
   module Actions
     class ShorebirdReleaseAction < Action
       def self.run(params)
         platform = params[:platform]
-        Fastlane::Actions.sh("shorebird release #{platform} #{params[:args]}".strip)
+        params[:args] ||= ""
 
         if platform == "ios"
-          # Get the most recently-created IPA file
-          ipa_file = Dir.glob('../build/ios/ipa/*.ipa')
-                        .sort_by! { |f| File.stat(f).ctime }
-                        .reverse!
-                        .first
-          puts("Setting IPA_OUTPUT_PATH to #{ipa_file}")
-          lane_context[SharedValues::IPA_OUTPUT_PATH] = ipa_file
+          if export_options_plist_in_args?(params)
+            # If the user is already providing an export options plist, warn
+            UI.deprecated("--export-options-plist should not be passed in the args parameter. Please use the export_options parameter instead.")
+          else
+            provisioning_profile_mapping = Fastlane::Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
+            export_options_plist_path = Helper::ExportOptionsPlist.generate_export_options_plist(params[:export_options], provisioning_profile_mapping)
+            optional_space = (params[:args].end_with?(" ") || params[:args].empty?) ? "" : " "
+            params[:args] = params[:args] + "#{optional_space}--export-options-plist #{export_options_plist_path}"
+          end
         end
+
+        command = "shorebird release #{platform} #{params[:args]}".strip
+        Fastlane::Actions.sh(command)
+
+        if platform == "ios"
+          lane_context[SharedValues::IPA_OUTPUT_PATH] = most_recent_ipa_file
+        end
+      end
+
+      def self.most_recent_ipa_file
+        Dir.glob('../build/ios/ipa/*.ipa')
+           .sort_by! { |f| File.stat(f).ctime }
+           .reverse!
+           .first
+      end
+
+      def self.export_options_plist_in_args?(params)
+        params[:args].include?("--export-options-plist")
       end
 
       def self.description
@@ -45,6 +68,14 @@ module Fastlane
             optional: true,
             type: String,
             default_value: ""
+          ),
+          FastlaneCore::ConfigItem.new(
+            key: :export_options,
+            description: "Path to an export options plist or a hash with export options. Use 'xcodebuild -help' to print the full set of available options",
+            optional: true,
+            type: Hash,
+            skip_type_validation: true,
+            default_value: {}
           )
         ]
       end
