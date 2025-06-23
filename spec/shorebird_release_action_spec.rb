@@ -29,6 +29,9 @@ describe Fastlane::Actions::ShorebirdReleaseAction do
         FileUtils.mkdir_p(File.join(root_dir, 'build/ios/ipa'))
         FileUtils.touch(File.join(root_dir, 'build/ios/ipa/old.ipa'))
         FileUtils.touch(File.join(root_dir, 'build/ios/ipa/new.ipa'))
+
+        # Make old.ipa be less recently created than new.ipa.
+        File.utime(Time.now - 1000, Time.now - 1000, File.join(root_dir, 'build/ios/ipa/old.ipa'))
       end
 
       before do
