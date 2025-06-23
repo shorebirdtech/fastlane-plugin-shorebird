@@ -32,6 +32,7 @@ describe Fastlane::Actions::ShorebirdReleaseAction do
 
         # Make old.ipa be less recently created than new.ipa.
         File.utime(Time.now - 1000, Time.now - 1000, File.join(root_dir, 'build/ios/ipa/old.ipa'))
+        File.utime(Time.now, Time.now, File.join(root_dir, 'build/ios/ipa/new.ipa'))
       end
 
       before do
