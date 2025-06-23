@@ -33,7 +33,7 @@ module Fastlane
 
       def self.most_recent_ipa_file
         Dir.glob(ipa_path_pattern)
-           .sort_by! { |f| File.stat(f).ctime }
+           .sort_by! { |f| File.stat(f).mtime }
            .reverse!
            .first
       end
