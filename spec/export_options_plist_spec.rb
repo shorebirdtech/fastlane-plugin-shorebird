@@ -49,15 +49,13 @@ describe Fastlane::Helper::ExportOptionsPlist do
     end
 
     it 'defaults to app-store if no method is provided' do
-      export_options = {}
-      export_options_plist = subject.generate_export_options_plist(export_options)
+      export_options_plist = subject.generate_export_options_plist({})
       actual_plist = Plist.parse_xml(export_options_plist)
       expect(actual_plist['method']).to eq('app-store')
     end
 
     it 'uses export method from export options plist if provided' do
-      export_options = { method: 'ad-hoc' }
-      export_options_plist = subject.generate_export_options_plist(export_options)
+      export_options_plist = subject.generate_export_options_plist({ method: 'ad-hoc' })
       actual_plist = Plist.parse_xml(export_options_plist)
       expect(actual_plist['method']).to eq('ad-hoc')
     end
