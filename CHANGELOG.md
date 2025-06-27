@@ -1,6 +1,7 @@
 # 0.4.0
 
 - Support fastlane directories anywhere in the Flutter project.
+- Respect export method in export options if provided.
 
 # 0.3.0
 

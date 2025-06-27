@@ -13,7 +13,7 @@ module Fastlane
         export_options_hash = {}
         if export_options.kind_of?(Hash)
           export_options_hash = export_options
-          export_options_hash[:method] = "app-store"
+          export_options_hash[:method] ||= "app-store"
           if provisioning_profile_mapping
             # If match has provided provisioning profiles, put them in the export options plist
             export_options_hash[:provisioningProfiles] = provisioning_profile_mapping
