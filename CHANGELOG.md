@@ -1,3 +1,7 @@
+# 0.4.0
+
+- Support fastlane directories anywhere in the Flutter project.
+
 # 0.3.0
 
 - Add support for manual iOS signing using [match](https://docs.fastlane.tools/actions/match/)

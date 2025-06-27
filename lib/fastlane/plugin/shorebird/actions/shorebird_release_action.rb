@@ -32,10 +32,29 @@ module Fastlane
       end
 
       def self.most_recent_ipa_file
-        Dir.glob('../build/ios/ipa/*.ipa')
-           .sort_by! { |f| File.stat(f).ctime }
+        Dir.glob(ipa_path_pattern)
+           .sort_by! { |f| File.stat(f).mtime }
            .reverse!
            .first
+      end
+
+      # Traverses up the directory tree until it finds a pubspec.yaml file.
+      # If no parent directory contains a pubspec.yaml file, we assume we are
+      # not in a Flutter project and raise an error.
+      def self.project_root
+        current_dir = Dir.pwd
+        current_dir = File.expand_path('..', current_dir) until File.exist?(File.join(current_dir, 'pubspec.yaml')) || (current_dir == '/')
+        # If we've reached the root directory, we've failed to find a pubspec.yaml file.
+        if current_dir == '/'
+          raise "Could not find pubspec.yaml in the directory tree"
+        end
+
+        current_dir
+      end
+
+      # .ipa path relative to the project root
+      def self.ipa_path_pattern
+        File.join(project_root, 'build/ios/ipa', '*.ipa')
       end
 
       def self.export_options_plist_in_args?(params)
