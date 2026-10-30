@@ -113,7 +113,15 @@ describe Fastlane::Actions::ShorebirdReleaseAction do
         expect(app_output_path).to end_with(File.join(@tmp_dir, 'build/macos/Build/Products/Release/new.app'))
       end
 
-      ['--flavor=prod -- --build-name=1.0.0', '--flavor prod -- --build-name=1.0.0', '-- --flavor prod'].each do |flavor_args|
+      [
+        '--flavor=prod',
+        '--flavor=prod -- --build-name=1.0.0',
+        '--flavor prod -- --build-name=1.0.0',
+        '--flavor dev --flavor prod',
+        '--flavor="prod"',
+        "--flavor 'prod'",
+        '-- --flavor prod'
+      ].each do |flavor_args|
         it "adds the most recent .app for the flavor to lane context (#{flavor_args})" do
           make_app(@tmp_dir, 'Release-prod', 'old.app', Time.now - 200_000)
           make_app(@tmp_dir, 'Release-prod', 'new.app', Time.now - 100_000)

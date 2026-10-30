@@ -2,6 +2,7 @@ require 'fastlane/action'
 require_relative '../helper/shorebird_helper'
 require 'gym'
 require 'plist'
+require 'shellwords'
 require 'tempfile'
 
 module Fastlane
@@ -55,7 +56,7 @@ module Fastlane
       # wins, the last one if repeated, as for any parsed option. Otherwise the
       # first --flavor after the separator is used.
       def self.flavor_from_args(args)
-        tokens = args.to_s.split
+        tokens = Shellwords.split(args.to_s)
         separator = tokens.index('--') || tokens.length
         flavor_values(tokens[0...separator]).last || flavor_values(tokens[(separator + 1)..] || []).first
       end
