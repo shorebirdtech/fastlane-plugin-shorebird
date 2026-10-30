@@ -30,15 +30,15 @@ module Fastlane
         command = "shorebird release #{platform} #{params[:args]}".strip
         Fastlane::Actions.sh(command)
 
-        write_output_path(platform)
+        write_output_path(params)
       end
 
-      def self.write_output_path(platform)
-        case platform
+      def self.write_output_path(params)
+        case params[:platform]
         when "ios"
           lane_context[SharedValues::IPA_OUTPUT_PATH] = most_recent_ipa_file
         when "macos"
-          lane_context[SharedValues::SHOREBIRD_MACOS_APP_OUTPUT_PATH] = most_recent_macos_app
+          lane_context[SharedValues::SHOREBIRD_MACOS_APP_OUTPUT_PATH] = most_recent_macos_app(flavor_from_args(params[:args]))
         end
       end
 
@@ -46,8 +46,15 @@ module Fastlane
         most_recent_file(ipa_path_pattern)
       end
 
-      def self.most_recent_macos_app
-        most_recent_file(macos_app_path_pattern)
+      def self.most_recent_macos_app(flavor)
+        most_recent_file(macos_app_path_pattern(flavor))
+      end
+
+      # The value of --flavor (as --flavor=<x> or --flavor <x>) among the
+      # shorebird arguments, ignoring anything after a bare -- separator.
+      def self.flavor_from_args(args)
+        shorebird_args = args.to_s.split(/(?:^|\s)--(?:\s|$)/, 2).first.to_s
+        shorebird_args[/(?:^|\s)--flavor(?:=|\s+)(\S+)/, 1]
       end
 
       def self.most_recent_file(pattern)
@@ -78,8 +85,9 @@ module Fastlane
 
       # .app path relative to the project root. Flavored builds are written to
       # Release-<flavor> instead of Release.
-      def self.macos_app_path_pattern
-        File.join(project_root, 'build/macos/Build/Products', 'Release{,-*}', '*.app')
+      def self.macos_app_path_pattern(flavor)
+        build_dir = flavor ? "Release-#{flavor}" : 'Release'
+        File.join(project_root, 'build/macos/Build/Products', build_dir, '*.app')
       end
 
       def self.export_options_plist_in_args?(params)
@@ -126,6 +134,7 @@ module Fastlane
 
       def self.output
         [
+          ['IPA_OUTPUT_PATH', 'The path to the .ipa created by an ios release'],
           ['SHOREBIRD_MACOS_APP_OUTPUT_PATH', 'The path to the .app created by a macos release']
         ]
       end

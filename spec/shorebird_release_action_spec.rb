@@ -79,21 +79,19 @@ describe Fastlane::Actions::ShorebirdReleaseAction do
     end
 
     describe 'targeting macos' do
-      def setup_build_dir(root_dir)
-        FileUtils.touch(File.join(root_dir, 'pubspec.yaml'))
-        old_app = File.join(root_dir, 'build/macos/Build/Products/Release/old.app')
-        new_app = File.join(root_dir, 'build/macos/Build/Products/Release-prod/new.app')
-        FileUtils.mkdir_p(old_app)
-        FileUtils.mkdir_p(new_app)
+      def make_app(root_dir, build_dir, name, mtime)
+        app = File.join(root_dir, 'build/macos/Build/Products', build_dir, name)
+        FileUtils.mkdir_p(app)
+        File.utime(mtime, mtime, app)
+      end
 
-        # Make old.app be less recently modified than new.app.
-        File.utime(Time.now - 100_000, Time.now - 100_000, old_app)
-        File.utime(Time.now, Time.now, new_app)
+      def app_output_path
+        Fastlane::Actions.lane_context[Fastlane::Actions::SharedValues::SHOREBIRD_MACOS_APP_OUTPUT_PATH]
       end
 
       before do
         @tmp_dir = Dir.mktmpdir
-        setup_build_dir(@tmp_dir)
+        FileUtils.touch(File.join(@tmp_dir, 'pubspec.yaml'))
         Dir.chdir(@tmp_dir)
       end
 
@@ -107,9 +105,22 @@ describe Fastlane::Actions::ShorebirdReleaseAction do
         subject.run(platform: "macos")
       end
 
-      it 'adds SHOREBIRD_MACOS_APP_OUTPUT_PATH to lane context' do
+      it 'adds the most recent unflavored .app to lane context' do
+        make_app(@tmp_dir, 'Release', 'old.app', Time.now - 200_000)
+        make_app(@tmp_dir, 'Release', 'new.app', Time.now - 100_000)
+        make_app(@tmp_dir, 'Release-prod', 'decoy.app', Time.now)
         subject.run(platform: "macos")
-        expect(Fastlane::Actions.lane_context[Fastlane::Actions::SharedValues::SHOREBIRD_MACOS_APP_OUTPUT_PATH]).to end_with(File.join(@tmp_dir, 'build/macos/Build/Products/Release-prod/new.app'))
+        expect(app_output_path).to end_with(File.join(@tmp_dir, 'build/macos/Build/Products/Release/new.app'))
+      end
+
+      ['--flavor=prod', '--flavor prod'].each do |flavor_args|
+        it "adds the most recent .app for the flavor to lane context (#{flavor_args})" do
+          make_app(@tmp_dir, 'Release-prod', 'old.app', Time.now - 200_000)
+          make_app(@tmp_dir, 'Release-prod', 'new.app', Time.now - 100_000)
+          make_app(@tmp_dir, 'Release', 'decoy.app', Time.now)
+          subject.run(platform: "macos", args: "#{flavor_args} -- --build-name=1.0.0")
+          expect(app_output_path).to end_with(File.join(@tmp_dir, 'build/macos/Build/Products/Release-prod/new.app'))
+        end
       end
     end
   end
