@@ -24,7 +24,7 @@ module Fastlane
         [
           FastlaneCore::ConfigItem.new(
             key: :platform,
-            description: "Which platform to patch (ios,android)",
+            description: "Which platform to patch (ios,android,macos)",
             optional: false,
             type: String
           ),

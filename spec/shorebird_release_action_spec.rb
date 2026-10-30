@@ -77,5 +77,48 @@ describe Fastlane::Actions::ShorebirdReleaseAction do
         expect { subject.run(platform: "ios") }.to raise_error("Could not find pubspec.yaml in the directory tree")
       end
     end
+
+    describe 'targeting macos' do
+      def setup_build_dir(root_dir)
+        FileUtils.touch(File.join(root_dir, 'pubspec.yaml'))
+        old_app = File.join(root_dir, 'build/macos/Build/Products/Release/old.app')
+        new_app = File.join(root_dir, 'build/macos/Build/Products/Release-prod/new.app')
+        FileUtils.mkdir_p(old_app)
+        FileUtils.mkdir_p(new_app)
+
+        # Make old.app be less recently modified than new.app.
+        File.utime(Time.now - 100_000, Time.now - 100_000, old_app)
+        File.utime(Time.now, Time.now, new_app)
+      end
+
+      before do
+        @tmp_dir = Dir.mktmpdir
+        setup_build_dir(@tmp_dir)
+        Dir.chdir(@tmp_dir)
+      end
+
+      it 'invokes shorebird release with the specified platform and args' do
+        expect(Fastlane::Actions).to receive(:sh).with("shorebird release macos --flavor=prod")
+        subject.run(platform: "macos", args: "--flavor=prod")
+      end
+
+      it 'does not generate an export options plist' do
+        expect(Fastlane::Helper::ExportOptionsPlist).not_to receive(:generate_export_options_plist)
+        subject.run(platform: "macos")
+      end
+
+      it 'adds SHOREBIRD_MACOS_APP_OUTPUT_PATH to lane context' do
+        subject.run(platform: "macos")
+        expect(Fastlane::Actions.lane_context[Fastlane::Actions::SharedValues::SHOREBIRD_MACOS_APP_OUTPUT_PATH]).to end_with(File.join(@tmp_dir, 'build/macos/Build/Products/Release-prod/new.app'))
+      end
+    end
+  end
+
+  describe '#is_supported?' do
+    it 'supports ios, android and mac' do
+      expect(subject.is_supported?(:ios)).to be(true)
+      expect(subject.is_supported?(:android)).to be(true)
+      expect(subject.is_supported?(:mac)).to be(true)
+    end
   end
 end

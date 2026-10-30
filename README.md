@@ -18,7 +18,7 @@ This plugin makes it easy to create Shorebird releases and patches.
 
 This plugin is designed to work with Flutter apps that use Shorebird. 
 
-In your Flutter app's `ios` and/or `android` directories, initialize Fastlane
+In your Flutter app's `ios`, `android` and/or `macos` directories, initialize Fastlane
 and add this plugin using `bundle exec fastlane add_plugin shorebird`.
 
 Then, update your `Fastfile` to include the following:
@@ -30,6 +30,20 @@ end
 ```
 
 This will create a new release on Shorebird for the iOS platform.
+
+`shorebird_release` and `shorebird_patch` accept `ios`, `android` and `macos`
+as the `platform`. An iOS release writes the path of its `.ipa` to
+`lane_context[SharedValues::IPA_OUTPUT_PATH]`, and a macOS release writes the
+path of its `.app` to `lane_context[SharedValues::SHOREBIRD_MACOS_APP_OUTPUT_PATH]`:
+
+```ruby
+platform :mac do
+  lane :release do
+    shorebird_release(platform: "macos")
+    app_path = lane_context[SharedValues::SHOREBIRD_MACOS_APP_OUTPUT_PATH]
+  end
+end
+```
 
 See https://docs.shorebird.dev/guides/fastlane for more information.
 

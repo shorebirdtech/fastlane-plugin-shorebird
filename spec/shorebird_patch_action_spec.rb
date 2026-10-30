@@ -18,6 +18,17 @@ describe Fastlane::Actions::ShorebirdPatchAction do
 
       expect(Fastlane::Actions).to receive(:sh).with("shorebird patch android -- --build-name=1.0.0")
       Fastlane::Actions::ShorebirdPatchAction.run(platform: "android", args: "-- --build-name=1.0.0")
+
+      expect(Fastlane::Actions).to receive(:sh).with("shorebird patch macos --release-version=1.2.3+4")
+      Fastlane::Actions::ShorebirdPatchAction.run(platform: "macos", args: "--release-version=1.2.3+4")
+    end
+  end
+
+  describe '#is_supported?' do
+    it 'supports ios, android and mac' do
+      expect(Fastlane::Actions::ShorebirdPatchAction.is_supported?(:ios)).to be(true)
+      expect(Fastlane::Actions::ShorebirdPatchAction.is_supported?(:android)).to be(true)
+      expect(Fastlane::Actions::ShorebirdPatchAction.is_supported?(:mac)).to be(true)
     end
   end
 end

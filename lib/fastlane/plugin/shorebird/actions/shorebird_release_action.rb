@@ -6,6 +6,10 @@ require 'tempfile'
 
 module Fastlane
   module Actions
+    module SharedValues
+      SHOREBIRD_MACOS_APP_OUTPUT_PATH = :SHOREBIRD_MACOS_APP_OUTPUT_PATH
+    end
+
     class ShorebirdReleaseAction < Action
       def self.run(params)
         platform = params[:platform]
@@ -26,13 +30,28 @@ module Fastlane
         command = "shorebird release #{platform} #{params[:args]}".strip
         Fastlane::Actions.sh(command)
 
-        if platform == "ios"
+        write_output_path(platform)
+      end
+
+      def self.write_output_path(platform)
+        case platform
+        when "ios"
           lane_context[SharedValues::IPA_OUTPUT_PATH] = most_recent_ipa_file
+        when "macos"
+          lane_context[SharedValues::SHOREBIRD_MACOS_APP_OUTPUT_PATH] = most_recent_macos_app
         end
       end
 
       def self.most_recent_ipa_file
-        Dir.glob(ipa_path_pattern)
+        most_recent_file(ipa_path_pattern)
+      end
+
+      def self.most_recent_macos_app
+        most_recent_file(macos_app_path_pattern)
+      end
+
+      def self.most_recent_file(pattern)
+        Dir.glob(pattern)
            .sort_by! { |f| File.stat(f).mtime }
            .reverse!
            .first
@@ -57,6 +76,12 @@ module Fastlane
         File.join(project_root, 'build/ios/ipa', '*.ipa')
       end
 
+      # .app path relative to the project root. Flavored builds are written to
+      # Release-<flavor> instead of Release.
+      def self.macos_app_path_pattern
+        File.join(project_root, 'build/macos/Build/Products', 'Release{,-*}', '*.app')
+      end
+
       def self.export_options_plist_in_args?(params)
         params[:args].include?("--export-options-plist")
       end
@@ -77,7 +102,7 @@ module Fastlane
         [
           FastlaneCore::ConfigItem.new(
             key: :platform,
-            description: "Which platform to release to (ios,android)",
+            description: "Which platform to release to (ios,android,macos)",
             optional: false,
             type: String
           ),
@@ -96,6 +121,12 @@ module Fastlane
             skip_type_validation: true,
             default_value: {}
           )
+        ]
+      end
+
+      def self.output
+        [
+          ['SHOREBIRD_MACOS_APP_OUTPUT_PATH', 'The path to the .app created by a macos release']
         ]
       end
 

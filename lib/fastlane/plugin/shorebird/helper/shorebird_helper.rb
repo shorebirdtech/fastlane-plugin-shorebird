@@ -17,7 +17,7 @@ module Fastlane
       end
 
       def self.supported_platforms
-        [:ios, :android]
+        [:ios, :android, :mac]
       end
     end
   end
