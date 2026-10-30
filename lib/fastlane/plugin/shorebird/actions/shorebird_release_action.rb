@@ -50,11 +50,24 @@ module Fastlane
         most_recent_file(macos_app_path_pattern(flavor))
       end
 
-      # The value of --flavor (as --flavor=<x> or --flavor <x>) among the
-      # shorebird arguments, ignoring anything after a bare -- separator.
+      # The flavor the CLI builds, read as its ArgResults.findOption does: a
+      # --flavor (as --flavor=<x> or --flavor <x>) before a bare -- separator
+      # wins, the last one if repeated, as for any parsed option. Otherwise the
+      # first --flavor after the separator is used.
       def self.flavor_from_args(args)
-        shorebird_args = args.to_s.split(/(?:^|\s)--(?:\s|$)/, 2).first.to_s
-        shorebird_args[/(?:^|\s)--flavor(?:=|\s+)(\S+)/, 1]
+        tokens = args.to_s.split
+        separator = tokens.index('--') || tokens.length
+        flavor_values(tokens[0...separator]).last || flavor_values(tokens[(separator + 1)..] || []).first
+      end
+
+      def self.flavor_values(tokens)
+        tokens.each_with_index.filter_map do |token, i|
+          if token == '--flavor'
+            tokens[i + 1]
+          elsif token.start_with?('--flavor=')
+            token.delete_prefix('--flavor=')
+          end
+        end
       end
 
       def self.most_recent_file(pattern)
