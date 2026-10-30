@@ -7,8 +7,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/cache@v4
+    - uses: actions/checkout@v7
+    - uses: actions/cache@v6
       with:
         path: vendor/bundle
         key: ${{ runner.os }}-gem-${{ hashFiles('**/Gemfile') }}
@@ -17,13 +17,13 @@ jobs:
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 3.3.2
+        ruby-version: '3.3'
     - name: Install dependencies
       run: bundle check || bundle install --jobs=4 --retry=3 --path vendor/bundle
     - name: Run tests
       run: bundle exec rake
     - name: Upload artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-results
         path: test-results

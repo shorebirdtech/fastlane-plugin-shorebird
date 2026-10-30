@@ -1,6 +1,7 @@
 ---
 require:
 - rubocop/require_tools
+plugins:
 - rubocop-performance
 AllCops:
   TargetRubyVersion: 2.6
@@ -124,7 +125,7 @@ Lint/UnusedMethodArgument:
 Lint/ParenthesesAsGroupedExpression:
   Exclude:
   - "**/spec/**/*"
-Naming/PredicateName:
+Naming/PredicatePrefix:
   Enabled: false
 Style/PerlBackrefs:
   Enabled: false
