@@ -1,3 +1,8 @@
+# 0.5.0
+
+- Support macOS in `shorebird_release` and `shorebird_patch`. macOS releases
+  write the path of the built `.app` to `SHOREBIRD_MACOS_APP_OUTPUT_PATH`.
+
 # 0.4.0
 
 - Support fastlane directories anywhere in the Flutter project.
