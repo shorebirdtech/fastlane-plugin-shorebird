@@ -2,10 +2,15 @@ require 'fastlane/action'
 require_relative '../helper/shorebird_helper'
 require 'gym'
 require 'plist'
+require 'shellwords'
 require 'tempfile'
 
 module Fastlane
   module Actions
+    module SharedValues
+      SHOREBIRD_MACOS_APP_OUTPUT_PATH = :SHOREBIRD_MACOS_APP_OUTPUT_PATH
+    end
+
     class ShorebirdReleaseAction < Action
       def self.run(params)
         platform = params[:platform]
@@ -26,13 +31,48 @@ module Fastlane
         command = "shorebird release #{platform} #{params[:args]}".strip
         Fastlane::Actions.sh(command)
 
-        if platform == "ios"
+        write_output_path(params)
+      end
+
+      def self.write_output_path(params)
+        case params[:platform]
+        when "ios"
           lane_context[SharedValues::IPA_OUTPUT_PATH] = most_recent_ipa_file
+        when "macos"
+          lane_context[SharedValues::SHOREBIRD_MACOS_APP_OUTPUT_PATH] = most_recent_macos_app(flavor_from_args(params[:args]))
         end
       end
 
       def self.most_recent_ipa_file
-        Dir.glob(ipa_path_pattern)
+        most_recent_file(ipa_path_pattern)
+      end
+
+      def self.most_recent_macos_app(flavor)
+        most_recent_file(macos_app_path_pattern(flavor))
+      end
+
+      # The flavor the CLI builds, read as its ArgResults.findOption does: a
+      # --flavor (as --flavor=<x> or --flavor <x>) before a bare -- separator
+      # wins, the last one if repeated, as for any parsed option. Otherwise the
+      # first --flavor after the separator is used.
+      def self.flavor_from_args(args)
+        tokens = Shellwords.split(args.to_s)
+        separator = tokens.index('--') || tokens.length
+        flavor_values(tokens[0...separator]).last || flavor_values(tokens[(separator + 1)..] || []).first
+      end
+
+      def self.flavor_values(tokens)
+        tokens.each_with_index.filter_map do |token, i|
+          if token == '--flavor'
+            tokens[i + 1]
+          elsif token.start_with?('--flavor=')
+            token.delete_prefix('--flavor=')
+          end
+        end
+      end
+
+      def self.most_recent_file(pattern)
+        Dir.glob(pattern)
            .sort_by! { |f| File.stat(f).mtime }
            .reverse!
            .first
@@ -57,6 +97,13 @@ module Fastlane
         File.join(project_root, 'build/ios/ipa', '*.ipa')
       end
 
+      # .app path relative to the project root. Flavored builds are written to
+      # Release-<flavor> instead of Release.
+      def self.macos_app_path_pattern(flavor)
+        build_dir = flavor ? "Release-#{flavor}" : 'Release'
+        File.join(project_root, 'build/macos/Build/Products', build_dir, '*.app')
+      end
+
       def self.export_options_plist_in_args?(params)
         params[:args].include?("--export-options-plist")
       end
@@ -77,7 +124,7 @@ module Fastlane
         [
           FastlaneCore::ConfigItem.new(
             key: :platform,
-            description: "Which platform to release to (ios,android)",
+            description: "Which platform to release to (ios,android,macos)",
             optional: false,
             type: String
           ),
@@ -96,6 +143,13 @@ module Fastlane
             skip_type_validation: true,
             default_value: {}
           )
+        ]
+      end
+
+      def self.output
+        [
+          ['IPA_OUTPUT_PATH', 'The path to the .ipa created by an ios release'],
+          ['SHOREBIRD_MACOS_APP_OUTPUT_PATH', 'The path to the .app created by a macos release']
         ]
       end
 

@@ -77,5 +77,74 @@ describe Fastlane::Actions::ShorebirdReleaseAction do
         expect { subject.run(platform: "ios") }.to raise_error("Could not find pubspec.yaml in the directory tree")
       end
     end
+
+    describe 'targeting macos' do
+      def make_app(root_dir, build_dir, name, mtime)
+        app = File.join(root_dir, 'build/macos/Build/Products', build_dir, name)
+        FileUtils.mkdir_p(app)
+        File.utime(mtime, mtime, app)
+      end
+
+      def app_output_path
+        Fastlane::Actions.lane_context[Fastlane::Actions::SharedValues::SHOREBIRD_MACOS_APP_OUTPUT_PATH]
+      end
+
+      before do
+        @tmp_dir = Dir.mktmpdir
+        FileUtils.touch(File.join(@tmp_dir, 'pubspec.yaml'))
+        Dir.chdir(@tmp_dir)
+      end
+
+      it 'invokes shorebird release with the specified platform and args' do
+        expect(Fastlane::Actions).to receive(:sh).with("shorebird release macos --flavor=prod")
+        subject.run(platform: "macos", args: "--flavor=prod")
+      end
+
+      it 'does not generate an export options plist' do
+        expect(Fastlane::Helper::ExportOptionsPlist).not_to receive(:generate_export_options_plist)
+        subject.run(platform: "macos")
+      end
+
+      it 'adds the most recent unflavored .app to lane context' do
+        make_app(@tmp_dir, 'Release', 'old.app', Time.now - 200_000)
+        make_app(@tmp_dir, 'Release', 'new.app', Time.now - 100_000)
+        make_app(@tmp_dir, 'Release-prod', 'decoy.app', Time.now)
+        subject.run(platform: "macos")
+        expect(app_output_path).to end_with(File.join(@tmp_dir, 'build/macos/Build/Products/Release/new.app'))
+      end
+
+      [
+        '--flavor=prod',
+        '--flavor=prod -- --build-name=1.0.0',
+        '--flavor prod -- --build-name=1.0.0',
+        '--flavor dev --flavor prod',
+        '--flavor="prod"',
+        "--flavor 'prod'",
+        '-- --flavor prod'
+      ].each do |flavor_args|
+        it "adds the most recent .app for the flavor to lane context (#{flavor_args})" do
+          make_app(@tmp_dir, 'Release-prod', 'old.app', Time.now - 200_000)
+          make_app(@tmp_dir, 'Release-prod', 'new.app', Time.now - 100_000)
+          make_app(@tmp_dir, 'Release', 'decoy.app', Time.now)
+          subject.run(platform: "macos", args: flavor_args)
+          expect(app_output_path).to end_with(File.join(@tmp_dir, 'build/macos/Build/Products/Release-prod/new.app'))
+        end
+      end
+
+      it 'prefers a --flavor before -- over one after it' do
+        make_app(@tmp_dir, 'Release-prod', 'new.app', Time.now - 100_000)
+        make_app(@tmp_dir, 'Release-dev', 'decoy.app', Time.now)
+        subject.run(platform: "macos", args: "--flavor=prod -- --flavor dev")
+        expect(app_output_path).to end_with(File.join(@tmp_dir, 'build/macos/Build/Products/Release-prod/new.app'))
+      end
+    end
+  end
+
+  describe '#is_supported?' do
+    it 'supports ios, android and mac' do
+      expect(subject.is_supported?(:ios)).to be(true)
+      expect(subject.is_supported?(:android)).to be(true)
+      expect(subject.is_supported?(:mac)).to be(true)
+    end
   end
 end
