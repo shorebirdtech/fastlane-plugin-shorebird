@@ -62,13 +62,13 @@ module Fastlane
       end
 
       def self.flavor_values(tokens)
-        tokens.each_with_index.filter_map do |token, i|
+        tokens.each_with_index.map do |token, i|
           if token == '--flavor'
             tokens[i + 1]
           elsif token.start_with?('--flavor=')
             token.delete_prefix('--flavor=')
           end
-        end
+        end.compact
       end
 
       def self.most_recent_file(pattern)
