@@ -1,7 +1,7 @@
 # Releasing
 
 The gem is published to [RubyGems](https://rubygems.org/gems/fastlane-plugin-shorebird)
-under the `shorebird` account (contact@shorebird.dev), which requires MFA.
+under the `shorebird` account (contact@shorebird.dev), which requires MFA. Its MFA recovery codes are in 1Password.
 
 1. Open a PR that bumps `VERSION` in `lib/fastlane/plugin/shorebird/version.rb`
    and adds a section for it at the top of `CHANGELOG.md`. Land it.
