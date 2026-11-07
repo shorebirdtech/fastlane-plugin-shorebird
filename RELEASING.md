@@ -16,12 +16,15 @@ RubyGems password or OTP is needed.
    ```
 3. Watch the run at
    https://github.com/shorebirdtech/fastlane-plugin-shorebird/actions/workflows/release.yml.
-   It fails if the tag doesn't match `VERSION` or the tests fail.
+   It fails if the tag doesn't match `VERSION`, isn't on `main`, or the tests
+   fail. To retry a failed run, use "Re-run failed jobs" on the run; don't
+   delete and re-push the tag.
 4. Create the GitHub release from the tag:
    ```
    gh release create v<VERSION> --generate-notes
    ```
 
 The gem's RubyGems owner is the `shorebird` account (contact@shorebird.dev).
-Its trusted publisher is this repository's `release.yml` workflow; its MFA
+Its trusted publisher is this repository's `release.yml` workflow in the
+`release` environment, which only `v*` tags can deploy to. The account's MFA
 recovery codes are in 1Password.
