@@ -1,0 +1,43 @@
+name: Release
+
+# Publishes the gem to RubyGems when a v<VERSION> tag is pushed, using
+# RubyGems trusted publishing (OIDC): no API key or OTP is stored here.
+# See RELEASING.md.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    if: github.repository == 'shorebirdtech/fastlane-plugin-shorebird'
+    runs-on: ubuntu-latest
+    permissions:
+      # The tag is already pushed, so the job only needs to read the repo.
+      contents: read
+      id-token: write
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
+      with:
+        ruby-version: '3.3'
+        bundler-cache: true
+    - name: Check the tag matches VERSION
+      run: |
+        version=$(ruby -r ./lib/fastlane/plugin/shorebird/version -e 'print Fastlane::Shorebird::VERSION')
+        if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+          echo "::error::Tag $GITHUB_REF_NAME does not match VERSION $version in version.rb"
+          exit 1
+        fi
+    - name: Run tests
+      run: bundle exec rake
+    # Runs `rake release`: the tag already exists, so it skips tagging and
+    # pushing and only builds the gem and pushes it to RubyGems.
+    - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1.4.1
