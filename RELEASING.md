@@ -5,7 +5,9 @@ under the `shorebird` account (contact@shorebird.dev), which requires MFA. Its M
 
 1. Open a PR that bumps `VERSION` in `lib/fastlane/plugin/shorebird/version.rb`
    and adds a section for it at the top of `CHANGELOG.md`. Land it.
-2. Check out the updated `main` with a clean working tree:
+2. Check out the updated `main` with a clean working tree, using a Ruby newer
+   than the macOS system Ruby (e.g. Homebrew's: `export PATH=/opt/homebrew/opt/ruby/bin:$PATH`;
+   the system Ruby 2.6 and its Bundler 1.17 can't resolve the dev dependencies):
    ```
    git checkout main && git pull
    bundle install
