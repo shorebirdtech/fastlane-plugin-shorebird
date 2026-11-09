@@ -17,8 +17,9 @@ RubyGems password or OTP is needed.
    ```
 3. Watch the run at
    https://github.com/shorebirdtech/fastlane-plugin-shorebird/actions/workflows/release.yml.
-   It fails if the tag doesn't match `VERSION`, isn't on `main`, or the tests
-   fail. If it fails:
+   It publishes the gem, then creates the GitHub release with generated
+   notes. It fails if the tag doesn't match `VERSION`, isn't on `main`, has no
+   `CHANGELOG.md` section, or the tests fail. If it fails:
    - Before "Build and push the gem": nothing was published. A re-run uses
      the same commit and workflow, so "Re-run failed jobs" only helps when
      the cause is outside the repo (the trusted publisher wasn't set up yet,
@@ -29,10 +30,7 @@ RubyGems password or OTP is needed.
      https://rubygems.org/gems/fastlane-plugin-shorebird/versions. If the
      version is listed, it is published; don't re-run, since RubyGems refuses
      to push the same version twice. Otherwise, re-run.
-4. Create the GitHub release from the tag:
-   ```
-   gh release create v<VERSION> --generate-notes
-   ```
+   - At "Create the GitHub release": the gem is published; re-run that job.
 
 The gem's RubyGems owner is the `shorebird` account (contact@shorebird.dev).
 Its trusted publisher is this repository's `release.yml` workflow in the
