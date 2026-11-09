@@ -19,11 +19,12 @@ RubyGems password or OTP is needed.
    https://github.com/shorebirdtech/fastlane-plugin-shorebird/actions/workflows/release.yml.
    It fails if the tag doesn't match `VERSION`, isn't on `main`, or the tests
    fail. If it fails:
-   - Before "Run release rake task" (a check, the tests, or trusted
-     publishing credentials): nothing was published. Fix the cause and use
-     "Re-run failed jobs". If the tag is on the wrong commit, delete it
-     (`git push --delete origin v<VERSION>` and `git tag -d v<VERSION>`) and
-     tag again.
+   - Before "Run release rake task": nothing was published. A re-run uses
+     the same commit and workflow, so "Re-run failed jobs" only helps when
+     the cause is outside the repo (the trusted publisher wasn't set up yet,
+     or a flaky test). Otherwise land the fix on `main`, delete the tag
+     (`git push --delete origin v<VERSION>` and `git tag -d v<VERSION>`), and
+     tag the fixed commit.
    - At "Run release rake task" or later: check
      https://rubygems.org/gems/fastlane-plugin-shorebird/versions. If the
      version is listed, it is published; don't re-run, since RubyGems refuses

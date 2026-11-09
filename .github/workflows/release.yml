@@ -39,8 +39,10 @@ jobs:
           echo "::error::Tag $GITHUB_REF_NAME is not on main"
           exit 1
         fi
+    # Specs only: RuboCop runs in test.yml when the change lands. Without a
+    # lockfile, a new cop released since then could otherwise block a release.
     - name: Run tests
-      run: bundle exec rake
+      run: bundle exec rspec
 
   release:
     needs: check
@@ -53,6 +55,8 @@ jobs:
       contents: read
       id-token: write
     steps:
+    # release-gem caches github.token for git itself, so later steps can
+    # still read it; it only has contents: read.
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
