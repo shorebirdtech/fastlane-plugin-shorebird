@@ -1,0 +1,89 @@
+name: Release
+
+# Publishes the gem to RubyGems when a v<VERSION> tag is pushed, using
+# RubyGems trusted publishing (OIDC): no API key or OTP is stored here.
+# See RELEASING.md.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  # The tests run here, without id-token.
+  check:
+    if: github.repository == 'shorebirdtech/fastlane-plugin-shorebird'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
+      with:
+        ruby-version: '3.3'
+    - name: Check the tag matches VERSION, is on main and has a CHANGELOG entry
+      run: |
+        version=$(ruby -r ./lib/fastlane/plugin/shorebird/version -e 'print Fastlane::Shorebird::VERSION')
+        if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+          echo "::error::Tag $GITHUB_REF_NAME does not match VERSION $version in version.rb"
+          exit 1
+        fi
+        if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+          echo "::error::Tag $GITHUB_REF_NAME is not on main"
+          exit 1
+        fi
+        if ! grep -qx "# $version" CHANGELOG.md; then
+          echo "::error::CHANGELOG.md has no '# $version' section"
+          exit 1
+        fi
+    # Specs only: RuboCop runs in test.yml when the change lands. Without a
+    # lockfile, a new cop released since then could otherwise block a release.
+    - name: Install dependencies
+      run: bundle install
+    - name: Run tests
+      run: bundle exec rspec
+
+  release:
+    needs: check
+    runs-on: ubuntu-latest
+    # The RubyGems trusted publisher requires this environment, which only
+    # v* tags may deploy to.
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    # No bundle here: the gem has no runtime dependencies, so building and
+    # pushing it runs no third-party gem code while the job can mint a
+    # RubyGems token.
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
+      with:
+        ruby-version: '3.3'
+    - name: Configure trusted publishing credentials
+      uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
+    - name: Build and push the gem
+      run: |
+        gem build fastlane-plugin-shorebird.gemspec --output release.gem
+        gem push release.gem
+
+  # A separate job, so the job that can mint a RubyGems token keeps a
+  # read-only GitHub token.
+  github-release:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Create the GitHub release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --generate-notes
