@@ -36,5 +36,4 @@ RubyGems password or OTP is needed.
 
 The gem's RubyGems owner is the `shorebird` account (contact@shorebird.dev).
 Its trusted publisher is this repository's `release.yml` workflow in the
-`release` environment, which only `v*` tags can deploy to. The account's MFA
-recovery codes are in 1Password.
+`release` environment, which only `v*` tags can deploy to.

@@ -26,7 +26,6 @@ jobs:
       uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
       with:
         ruby-version: '3.3'
-        bundler-cache: true
     - name: Check the tag matches VERSION and is on main
       run: |
         version=$(ruby -r ./lib/fastlane/plugin/shorebird/version -e 'print Fastlane::Shorebird::VERSION')
@@ -40,6 +39,8 @@ jobs:
         fi
     # Specs only: RuboCop runs in test.yml when the change lands. Without a
     # lockfile, a new cop released since then could otherwise block a release.
+    - name: Install dependencies
+      run: bundle install
     - name: Run tests
       run: bundle exec rspec
 
