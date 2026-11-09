@@ -13,8 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  # Runs without id-token, so no dependency code runs where it could mint
-  # the RubyGems token.
+  # The tests run here, without id-token. The release job still installs
+  # the bundle (Gemfile.lock isn't committed) to run `rake release`.
   check:
     if: github.repository == 'shorebirdtech/fastlane-plugin-shorebird'
     runs-on: ubuntu-latest
@@ -23,6 +23,11 @@ jobs:
       with:
         fetch-depth: 0
         persist-credentials: false
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
+      with:
+        ruby-version: '3.3'
+        bundler-cache: true
     - name: Check the tag matches VERSION and is on main
       run: |
         version=$(ruby -r ./lib/fastlane/plugin/shorebird/version -e 'print Fastlane::Shorebird::VERSION')
@@ -34,11 +39,6 @@ jobs:
           echo "::error::Tag $GITHUB_REF_NAME is not on main"
           exit 1
         fi
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
-      with:
-        ruby-version: '3.3'
-        bundler-cache: true
     - name: Run tests
       run: bundle exec rake
 
