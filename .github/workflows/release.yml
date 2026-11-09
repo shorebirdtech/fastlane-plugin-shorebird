@@ -13,8 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  # The tests run here, without id-token. The release job still installs
-  # the bundle (Gemfile.lock isn't committed) to run `rake release`.
+  # The tests run here, without id-token.
   check:
     if: github.repository == 'shorebirdtech/fastlane-plugin-shorebird'
     runs-on: ubuntu-latest
@@ -51,12 +50,12 @@ jobs:
     # v* tags may deploy to.
     environment: release
     permissions:
-      # The tag is already pushed, so the job only needs to read the repo.
       contents: read
       id-token: write
+    # No bundle here: the gem has no runtime dependencies, so building and
+    # pushing it runs no third-party gem code while the job can mint a
+    # RubyGems token.
     steps:
-    # release-gem caches github.token for git itself, so later steps can
-    # still read it; it only has contents: read.
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: false
@@ -64,7 +63,9 @@ jobs:
       uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
       with:
         ruby-version: '3.3'
-        bundler-cache: true
-    # Runs `rake release`: the tag already exists, so it skips tagging and
-    # pushing and only builds the gem and pushes it to RubyGems.
-    - uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1.4.1
+    - name: Configure trusted publishing credentials
+      uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
+    - name: Build and push the gem
+      run: |
+        gem build fastlane-plugin-shorebird.gemspec
+        gem push "fastlane-plugin-shorebird-${GITHUB_REF_NAME#v}.gem"
